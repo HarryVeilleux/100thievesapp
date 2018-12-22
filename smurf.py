@@ -57,7 +57,7 @@ class Smurffinder(object):
                 valid = {'[summoner name]': "Input summoner name to get data.",
                         'commands': "Print valid commands",
                         'exit': "Close program"}
-                command = input("What summoner would you like to examine? ")
+                command = input("What summoner would you like to examine " + glob_msg + "? ")
                 if command=='exit':
                     cont = False
                 elif command=='commands':
@@ -77,14 +77,6 @@ class Smurffinder(object):
                             self.summoner, self.start, self.end)
                         self.dbupdate(self.dbname).update_matches(gamerows)
                         self.dbupdate(self.dbname).update_players(plrows)
-                        for pl in allpls:
-                            plinfo = self.dbquery(self.dbname).acct_from_db(pl)
-                            if plinfo==1:
-                                plrow = self.riotdata().acct_info(pl)
-                                try:
-                                    self.dbupdate(self.dbname).update_accounts(plrow,player='No')
-                                except TypeError:
-                                    continue
                         screen = 'summ_info'
                     else:
                         screen = 'summ_info'
@@ -103,34 +95,49 @@ class Smurffinder(object):
                     self.end = dt.datetime.strptime(end, '%Y/%m/%d')
                     topplw = self.dbquery(self.dbname).plw_in_range(self.summoner,
                                 self.start, self.end)
+                    newplw = []
+                    for pl in topplw:
+                        if pl[0]=='UNKNOWN PLAYER':
+                            name = self.riotdata().acct_info(int(pl[1]))
+                            if name==1:
+                                newplw.append((pl[0], pl[2]))
+                            else:
+                                newplw.append((name[1], pl[2]))
+                                self.dbupdate(self.dbname).update_accounts(name, player='No')
+                        else:
+                            newplw.append((pl[0], pl[2]))
                     gamesdf = self.dbquery(self.dbname).matches_in_range(self.summoner,
                                 self.start, self.end)
-                    self.viewdata().plw(topplw)
+                    self.viewdata().plw(newplw)
                     self.viewdata().matchagg(self.summoner, gamesdf)
                 elif command=='update':
                     info = self.dbquery(self.dbname).acct_from_db(self.summoner)
-                    if info[2]=='None':
+                    if info[1]=='None':
                         plinfo = self.riotdata().summ_info(self.summoner)
                         self.dbupdate(self.dbname).update_accounts(plinfo)
-                    start = input("Start date (YYYY/MM/DD): ")
-                    self.start = dt.datetime.strptime(start, '%Y/%m/%d')
-                    end = input("End date (YYYY/MM/DD): ")
-                    self.end = dt.datetime.strptime(end, '%Y/%m/%d')
+                    while True:
+                        start = input("Start date (YYYY/MM/DD): ")
+                        try:
+                            self.start = dt.datetime.strptime(start, '%Y/%m/%d')
+                            break
+                        except ValueError:
+                            print("Invalid input!")
+                            continue
+                    while True:
+                        end = input("End date (YYYY/MM/DD): ")
+                        try:
+                            self.end = dt.datetime.strptime(end, '%Y/%m/%d')
+                            break
+                        except ValueError:
+                            print("Invalid input!")
+                            continue
                     acctID = self.dbquery(self.dbname).acct_from_db(self.summoner)[0]
-                    cached = self.dbquery(self.dbname).gameids_in_range(acctID,
-                        self.start, self.end)
+                    #self.dbupdate(self.dbname).update_updates(acctID, self.start, self.end)
+                    cached = self.dbquery(self.dbname).gameids(acctID)
                     gamerows, plrows, allpls = self.riotdata().match_in_range(
                         self.summoner, self.start, self.end, cached=cached)
                     self.dbupdate(self.dbname).update_matches(gamerows)
                     self.dbupdate(self.dbname).update_players(plrows)
-                    for pl in allpls:
-                        plinfo = self.dbquery(self.dbname).acct_from_db(pl)
-                        if plinfo==1:
-                            plrow = self.riotdata().acct_info(pl)
-                            try:
-                                self.dbupdate(self.dbname).update_accounts(plrow,player='No')
-                            except TypeError:
-                                continue
                     screen = 'summ_info'
                 elif command=='new':
                     screen = 'summ_select'
@@ -145,38 +152,3 @@ class Smurffinder(object):
                 print("How'd you do that?")
 
         print("Thank you for using SmurfFinder!")
-
-
-stuff = """
-        while cont==True:
-            command = input(msg)
-            if command.lower()=='exit':
-                cont=False
-            elif msg=="Summoner: ":
-                self.summoner = 'aphromoo'#command
-                info = self.dbquery(dbname).acct_from_db(self.summoner)
-                if info == 1:
-                    summl = self.riotdata().summ_info(self.summoner)
-                    self.dbupdate(dbname).update_accounts(summl)
-                    info = self.dbquery(dbname).acct_from_db(self.summoner)
-                self.viewdata().summ(info)
-                msg = "Start date (YYYY/MM/DD): "
-            elif msg=="Start date (YYYY/MM/DD): ":
-                self.start = dt.datetime.strptime(command, '%Y/%m/%d')
-                msg = "End date (YYYY/MM/DD): "
-            elif msg=="End date (YYYY/MM/DD): ":
-                self.end = dt.datetime.strptime(command, '%Y/%m/%d')
-                gamerows, plrows = self.riotdata().match_in_range(self.summoner,
-                                    self.start, self.end)
-                self.dbupdate(dbname).update_matches(gamerows)
-                self.dbupdate(dbname).update_players(plrows)
-                topplw = self.dbquery(dbname).plw_in_range(self.summoner,
-                            self.start, self.end)
-                gamesdf = self.dbquery(dbname).matches_in_range(self.summoner,
-                            self.start, self.end)
-                self.viewdata().plw(topplw)
-                self.viewdata().matchagg(self.summoner, gamesdf)
-                msg = "Summoner: "
-            else:
-                print("How did this happen?")
-"""

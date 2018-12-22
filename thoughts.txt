@@ -1,0 +1,15 @@
+TO DO:
+-Suggestions
+-Show database dimensions
+-Known pros
+
+-Why no data for later segments?
+
+
+given s
+
+h = ceil(s / 3600)
+m = ceil((s - h * 3600) / 60)
+s = s - (h * 3600) - m * 3600
+
+make update table - Add all "update" commands to table

@@ -15,6 +15,6 @@ Python script to pull match and summoner data from Riot's API and interpret it i
 
 6. New data is automatically added to 'thieves/data/master.db' file, which is queried with 'view' commands.
 
-7. Use 'new' command to choose a new summoner (HIGHLY RECOMMEND CHOOSING A SUMMONER FROM TOP 10 PLAYED WITH).
+7. Use 'new' command to choose a new summoner (HIGH RECOMMEND CHOOSING A SUMMONER FROM TOP 10 PLAYED WITH).
 
 8. Program will loop to the new summoner.
